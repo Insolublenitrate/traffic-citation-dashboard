@@ -226,11 +226,11 @@ export default function DashboardSidebar({ data, filters, onFilterChange, isMobi
                   <SelectTrigger><SelectValue placeholder="All Races" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="All">All Races</SelectItem>
-                    <SelectItem value="W">White</SelectItem>
-                    <SelectItem value="B">Black</SelectItem>
-                    <SelectItem value="H">Hispanic</SelectItem>
-                    <SelectItem value="A">Asian</SelectItem>
-                    <SelectItem value="O">Other</SelectItem>
+                    <SelectItem value="white">White</SelectItem>
+                    <SelectItem value="black">Black</SelectItem>
+                    <SelectItem value="hispanic">Hispanic</SelectItem>
+                    <SelectItem value="asian/pacific islander">Asian</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -241,8 +241,8 @@ export default function DashboardSidebar({ data, filters, onFilterChange, isMobi
                   <SelectTrigger><SelectValue placeholder="All Genders" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="All">All Genders</SelectItem>
-                    <SelectItem value="M">Male</SelectItem>
-                    <SelectItem value="F">Female</SelectItem>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

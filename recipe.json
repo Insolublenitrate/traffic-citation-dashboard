@@ -1,0 +1,88 @@
+{
+    "version": 1,
+    "layers": {
+        "traffic_stops": {
+            "source": "mapbox://tileset-source/insolublenitrate/ohio-traffic-stops-source",
+            "minzoom": 0,
+            "maxzoom": 16,
+            "features": {
+                "attributes": {
+                    "set": {
+                        "agency_name": [
+                            "get",
+                            "agency_name"
+                        ],
+                        "stop_date": [
+                            "get",
+                            "stop_date"
+                        ],
+                        "year": [
+                            "get",
+                            "year"
+                        ],
+                        "reason": [
+                            "get",
+                            "reason"
+                        ],
+                        "outcome": [
+                            "get",
+                            "outcome"
+                        ],
+                        "search_conducted": [
+                            "get",
+                            "search_conducted"
+                        ],
+                        "contraband_found": [
+                            "get",
+                            "contraband_found"
+                        ],
+                        "officer_id": [
+                            "get",
+                            "officer_id"
+                        ],
+                        "subject_race": [
+                            "get",
+                            "subject_race"
+                        ],
+                        "subject_sex": [
+                            "get",
+                            "subject_sex"
+                        ],
+                        "county_name": [
+                            "get",
+                            "county_name"
+                        ],
+                        "search_basis": [
+                            "get",
+                            "search_basis"
+                        ],
+                        "violation": [
+                            "get",
+                            "violation"
+                        ],
+                        "location": [
+                            "get",
+                            "location"
+                        ],
+                        "type": [
+                            "get",
+                            "type"
+                        ],
+                        "arrest_made": [
+                            "get",
+                            "arrest_made"
+                        ],
+                        "warning_issued": [
+                            "get",
+                            "warning_issued"
+                        ],
+                        "contraband_drugs": [
+                            "get",
+                            "contraband_drugs"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}
