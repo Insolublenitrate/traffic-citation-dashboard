@@ -1,22 +1,23 @@
 "use client";
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import Map, { Source, Layer, NavigationControl, FullscreenControl, MapRef, LayerProps } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import type { MapFilters } from '@/app/page';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const MAPBOX_USERNAME = 'insolublenitrate';
 const TILESET_ID = `${MAPBOX_USERNAME}.ohio-traffic-stops`;
 
 const INITIAL_VIEW_STATE = {
-  longitude: -82.9988, // Centered on Columbus, OH
+  longitude: -82.9988,
   latitude: 39.9612,
   zoom: 6,
   pitch: 0,
   bearing: 0
 };
 
-// Heatmap layer for low zoom levels
+// Heatmap layer for low zoom levels - Cyberpunk Aesthetic
 const heatmapLayer: LayerProps = {
   id: 'traffic-heatmap',
   type: 'heatmap',
@@ -24,40 +25,34 @@ const heatmapLayer: LayerProps = {
   'source-layer': 'traffic_stops',
   maxzoom: 12,
   paint: {
-    // Increase the heatmap weight based on frequency
     'heatmap-weight': 1,
-    // Increase the heatmap color weight weight by zoom level
-    // heatmap-intensity is a multiplier on top of heatmap-weight
     'heatmap-intensity': [
       'interpolate',
       ['linear'],
       ['zoom'],
       0, 1,
-      12, 3
+      12, 4
     ],
-    // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
-    // Begin color ramp at 0-stop with a 0-transparancy color
-    // to create a blur-like effect.
+    // Neon Cyberpunk Color Ramp
     'heatmap-color': [
       'interpolate',
       ['linear'],
       ['heatmap-density'],
-      0, 'rgba(33,102,172,0)',
-      0.2, 'rgb(103,169,207)',
-      0.4, 'rgb(209,229,240)',
-      0.6, 'rgb(253,219,199)',
-      0.8, 'rgb(239,138,98)',
-      1, 'rgb(178,24,43)'
+      0, 'rgba(0,0,0,0)',
+      0.1, '#3b0764', // Deep Purple
+      0.3, '#7e22ce', // Purple
+      0.5, '#db2777', // Hot Pink
+      0.7, '#f43f5e', // Rose
+      0.9, '#eab308', // Neon Yellow
+      1, '#ffffff'    // White Hot
     ],
-    // Adjust the heatmap radius by zoom level
     'heatmap-radius': [
       'interpolate',
       ['linear'],
       ['zoom'],
       0, 2,
-      12, 20
+      12, 30
     ],
-    // Transition from heatmap to circle layer by zoom level
     'heatmap-opacity': [
       'interpolate',
       ['linear'],
@@ -80,17 +75,17 @@ const pointLayer: LayerProps = {
     'circle-color': [
       'match',
       ['get', 'outcome'],
-      'Citation', '#ef4444', // Red
-      'Warning', '#eab308',  // Yellow
-      'Arrest', '#b91c1c',   // Dark Red
-      '#64748b' // Default slate
+      'Citation', '#f43f5e', // Neon Rose
+      'Warning', '#eab308',  // Neon Yellow
+      'Arrest', '#9333ea',   // Neon Purple
+      '#64748b' // Slate
     ],
     'circle-radius': [
       'interpolate',
       ['linear'],
       ['zoom'],
       10, 2,
-      16, 6
+      16, 8
     ],
     'circle-opacity': [
       'interpolate',
@@ -100,29 +95,45 @@ const pointLayer: LayerProps = {
       12, 1
     ],
     'circle-stroke-width': 1,
-    'circle-stroke-color': '#1e293b'
+    'circle-stroke-color': '#09090b'
   }
 };
 
 interface TrafficMapProps {
   onDataLoad?: (data: any[]) => void;
+  filters: MapFilters;
 }
 
-export default function TrafficMap({ onDataLoad }: TrafficMapProps) {
+export default function TrafficMap({ onDataLoad, filters }: TrafficMapProps) {
   const [hoverInfo, setHoverInfo] = useState<any>(null);
   const mapRef = useRef<MapRef>(null);
 
+  // Build Mapbox filter array based on user selections
+  const mapboxFilter = useMemo(() => {
+    const activeFilters: any[] = ['all'];
+    
+    if (filters.department !== 'All') {
+      activeFilters.push(['==', ['get', 'agency_name'], filters.department]);
+    }
+    if (filters.year !== 'All') {
+      activeFilters.push(['==', ['get', 'year'], parseInt(filters.year, 10)]);
+    }
+    if (filters.outcome !== 'All') {
+      activeFilters.push(['==', ['get', 'outcome'], filters.outcome]);
+    }
+    if (filters.reason !== 'All') {
+      activeFilters.push(['==', ['get', 'reason'], filters.reason]);
+    }
+
+    return activeFilters.length > 1 ? activeFilters : undefined;
+  }, [filters]);
+
   const updateSidebarData = useCallback(() => {
     if (mapRef.current && onDataLoad) {
-      // Query rendered features from the Mapbox vector source
       const features = mapRef.current.queryRenderedFeatures({
         layers: ['traffic-points', 'traffic-heatmap']
       });
-      // Pass the properties of the features to the sidebar
       const propertiesList = features.map(f => f.properties);
-      
-      // Deduplicate features if needed, but Mapbox features might represent multiple points in heatmap.
-      // We will just pass the properties.
       onDataLoad(propertiesList);
     }
   }, [onDataLoad]);
@@ -166,8 +177,8 @@ export default function TrafficMap({ onDataLoad }: TrafficMapProps) {
         onIdle={updateSidebarData}
       >
         <Source id="traffic-stops" type="vector" url={`mapbox://${TILESET_ID}`}>
-          <Layer {...heatmapLayer} />
-          <Layer {...pointLayer} />
+          <Layer {...heatmapLayer} filter={mapboxFilter} />
+          <Layer {...pointLayer} filter={mapboxFilter} />
         </Source>
         
         <NavigationControl position="top-right" />
@@ -175,19 +186,19 @@ export default function TrafficMap({ onDataLoad }: TrafficMapProps) {
 
         {hoverInfo && (
           <div
-            className="absolute bg-zinc-900/90 text-white p-3 rounded-lg shadow-xl border border-zinc-700 pointer-events-none text-sm z-50 backdrop-blur-sm"
+            className="absolute bg-zinc-950/90 text-white p-3 rounded-lg shadow-2xl border border-zinc-800 pointer-events-none text-sm z-50 backdrop-blur-md"
             style={{ left: hoverInfo.x + 15, top: hoverInfo.y + 15 }}
           >
-            <div className="font-bold text-lg mb-1">{hoverInfo.feature.properties.agency_name}</div>
-            <div className="text-zinc-300 mb-2">{hoverInfo.feature.properties.stop_date}</div>
+            <div className="font-bold text-lg mb-1 text-zinc-100">{hoverInfo.feature.properties.agency_name}</div>
+            <div className="text-zinc-400 mb-3">{hoverInfo.feature.properties.stop_date}</div>
             
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
               <span className="text-zinc-500">Reason</span>
-              <span className="font-medium text-right">{hoverInfo.feature.properties.reason}</span>
+              <span className="font-medium text-right text-zinc-200">{hoverInfo.feature.properties.reason}</span>
               
               <span className="text-zinc-500">Outcome</span>
               <span className={`font-medium text-right ${
-                hoverInfo.feature.properties.outcome === 'Citation' ? 'text-red-400' : 'text-yellow-400'
+                hoverInfo.feature.properties.outcome === 'Citation' ? 'text-pink-500' : 'text-yellow-400'
               }`}>
                 {hoverInfo.feature.properties.outcome}
               </span>

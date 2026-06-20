@@ -44,11 +44,23 @@ def main():
                     
                 stop_date = f"{date_str} {time_str}".strip()
                 
-                reason = str(row.get('reason_for_stop', 'Unknown'))
+                # Extract year
+                try:
+                    year = int(date_str.split('-')[0])
+                except (ValueError, IndexError):
+                    year = 0
+
+                reason = str(row.get('violation', 'Unknown'))
                 if reason.lower() == 'nan': reason = 'Unknown'
                 
                 outcome = str(row.get('outcome', 'Warning'))
                 if outcome.lower() == 'nan': outcome = 'Warning'
+
+                dept = str(row.get('department_name', args.agency))
+                if dept.lower() == 'nan': dept = args.agency
+                
+                search_conducted = str(row.get('search_conducted', 'False')).lower() == 'true'
+                contraband_found = str(row.get('contraband_found', 'False')).lower() == 'true'
                 
                 feature = {
                     "type": "Feature",
@@ -57,10 +69,13 @@ def main():
                         "coordinates": [lng, lat]
                     },
                     "properties": {
-                        "agency_name": args.agency,
+                        "agency_name": dept,
                         "stop_date": stop_date,
+                        "year": year,
                         "reason": reason,
-                        "outcome": outcome
+                        "outcome": outcome,
+                        "search_conducted": search_conducted,
+                        "contraband_found": contraband_found
                     }
                 }
                 
