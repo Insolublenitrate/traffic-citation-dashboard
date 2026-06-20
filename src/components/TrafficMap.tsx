@@ -112,18 +112,21 @@ export default function TrafficMap({ onDataLoad, filters }: TrafficMapProps) {
   const mapboxFilter = useMemo(() => {
     const activeFilters: any[] = ['all'];
     
-    if (filters.department !== 'All') {
-      activeFilters.push(['==', ['get', 'agency_name'], filters.department]);
-    }
-    if (filters.year !== 'All') {
-      activeFilters.push(['==', ['get', 'year'], parseInt(filters.year, 10)]);
-    }
-    if (filters.outcome !== 'All') {
-      activeFilters.push(['==', ['get', 'outcome'], filters.outcome]);
-    }
-    if (filters.reason !== 'All') {
-      activeFilters.push(['==', ['get', 'reason'], filters.reason]);
-    }
+    if (filters.department !== 'All') activeFilters.push(['==', ['get', 'agency_name'], filters.department]);
+    if (filters.year !== 'All') activeFilters.push(['==', ['get', 'year'], parseInt(filters.year, 10)]);
+    if (filters.outcome !== 'All') activeFilters.push(['==', ['get', 'outcome'], filters.outcome]);
+    if (filters.reason !== 'All') activeFilters.push(['==', ['get', 'reason'], filters.reason]);
+    if (filters.subject_race !== 'All') activeFilters.push(['==', ['get', 'subject_race'], filters.subject_race]);
+    if (filters.subject_sex !== 'All') activeFilters.push(['==', ['get', 'subject_sex'], filters.subject_sex]);
+    if (filters.county_name !== 'All') activeFilters.push(['==', ['get', 'county_name'], filters.county_name]);
+    if (filters.search_basis !== 'All') activeFilters.push(['==', ['get', 'search_basis'], filters.search_basis]);
+    if (filters.violation !== 'All') activeFilters.push(['==', ['get', 'violation'], filters.violation]);
+    if (filters.type !== 'All') activeFilters.push(['==', ['get', 'type'], filters.type]);
+    if (filters.arrest_made !== 'All') activeFilters.push(['==', ['get', 'arrest_made'], filters.arrest_made === 'true']);
+    if (filters.warning_issued !== 'All') activeFilters.push(['==', ['get', 'warning_issued'], filters.warning_issued === 'true']);
+    if (filters.contraband_drugs !== 'All') activeFilters.push(['==', ['get', 'contraband_drugs'], filters.contraband_drugs === 'true']);
+    if (filters.officer_id !== '') activeFilters.push(['==', ['get', 'officer_id'], filters.officer_id]);
+    if (filters.location !== '') activeFilters.push(['in', filters.location.toLowerCase(), ['downcase', ['get', 'location']]]);
 
     return activeFilters.length > 1 ? activeFilters : ['has', 'agency_name'];
   }, [filters]);

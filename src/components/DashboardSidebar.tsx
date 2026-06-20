@@ -4,6 +4,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -66,7 +67,7 @@ export default function DashboardSidebar({ data, filters, onFilterChange, isMobi
     onFilterChange({ ...filters, [key]: value });
   };
 
-  const hasActiveFilters = Object.values(filters).some(v => v !== 'All');
+  const hasActiveFilters = Object.entries(filters).some(([k, v]) => (v !== 'All' && v !== '' && v !== 'false'));
 
   return (
     <Card className={`flex flex-col border-r shadow-xl z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 ${isMobile ? 'h-full border-none rounded-none' : 'w-96 h-full'}`}>
@@ -213,10 +214,78 @@ export default function DashboardSidebar({ data, filters, onFilterChange, isMobi
                 </Select>
               </div>
 
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">Officer ID</label>
+                <Input placeholder="Search by Officer ID Hash..." value={filters.officer_id} onChange={(e) => updateFilter('officer_id', e.target.value)} />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">Subject Race</label>
+                <Select value={filters.subject_race} onValueChange={(val) => updateFilter('subject_race', val || 'All')}>
+                  <SelectTrigger><SelectValue placeholder="All Races" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Races</SelectItem>
+                    <SelectItem value="W">White</SelectItem>
+                    <SelectItem value="B">Black</SelectItem>
+                    <SelectItem value="H">Hispanic</SelectItem>
+                    <SelectItem value="A">Asian</SelectItem>
+                    <SelectItem value="O">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">Subject Sex</label>
+                <Select value={filters.subject_sex} onValueChange={(val) => updateFilter('subject_sex', val || 'All')}>
+                  <SelectTrigger><SelectValue placeholder="All Genders" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Genders</SelectItem>
+                    <SelectItem value="M">Male</SelectItem>
+                    <SelectItem value="F">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">County</label>
+                <Input placeholder="Filter by County..." value={filters.county_name} onChange={(e) => updateFilter('county_name', e.target.value)} />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">Search Basis</label>
+                <Select value={filters.search_basis} onValueChange={(val) => updateFilter('search_basis', val || 'All')}>
+                  <SelectTrigger><SelectValue placeholder="All Search Basis" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Search Basis</SelectItem>
+                    <SelectItem value="Probable Cause">Probable Cause</SelectItem>
+                    <SelectItem value="Consent">Consent</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">Contraband Found</label>
+                <Select value={filters.contraband_drugs} onValueChange={(val) => updateFilter('contraband_drugs', val || 'All')}>
+                  <SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">Any</SelectItem>
+                    <SelectItem value="true">Yes</SelectItem>
+                    <SelectItem value="false">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">Location Details</label>
+                <Input placeholder="Search location text..." value={filters.location} onChange={(e) => updateFilter('location', e.target.value)} />
+              </div>
+
               <Button 
                 variant="outline" 
                 className="w-full mt-4" 
-                onClick={() => onFilterChange({ department: 'All', year: 'All', outcome: 'All', reason: 'All' })}
+                onClick={() => onFilterChange({ department: 'All', year: 'All', outcome: 'All', reason: 'All', officer_id: '', subject_race: 'All', subject_sex: 'All', county_name: 'All', search_basis: 'All', violation: 'All', location: '', type: 'All', arrest_made: 'All', warning_issued: 'All', contraband_drugs: 'All' })}
               >
                 Reset Filters
               </Button>

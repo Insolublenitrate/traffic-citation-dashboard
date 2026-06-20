@@ -12,17 +12,38 @@ export type MapFilters = {
   year: string;
   outcome: string;
   reason: string;
+  officer_id: string;
+  subject_race: string;
+  subject_sex: string;
+  county_name: string;
+  search_basis: string;
+  violation: string;
+  location: string;
+  type: string;
+  arrest_made: string;
+  warning_issued: string;
+  contraband_drugs: string;
 };
 
 export default function Home() {
   const [mapData, setMapData] = useState<any[]>([]);
   
-  // Filter state
   const [filters, setFilters] = useState<MapFilters>({
     department: 'All',
     year: 'All',
     outcome: 'All',
-    reason: 'All'
+    reason: 'All',
+    officer_id: '',
+    subject_race: 'All',
+    subject_sex: 'All',
+    county_name: 'All',
+    search_basis: 'All',
+    violation: 'All',
+    location: '',
+    type: 'All',
+    arrest_made: 'All',
+    warning_issued: 'All',
+    contraband_drugs: 'All'
   });
 
   return (

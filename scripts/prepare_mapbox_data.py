@@ -75,7 +75,18 @@ def main():
                         "reason": reason,
                         "outcome": outcome,
                         "search_conducted": search_conducted,
-                        "contraband_found": contraband_found
+                        "contraband_found": contraband_found,
+                        "officer_id": str(row.get('officer_id_hash', '')),
+                        "subject_race": str(row.get('subject_race', '')),
+                        "subject_sex": str(row.get('subject_sex', '')),
+                        "county_name": str(row.get('county_name', '')),
+                        "search_basis": str(row.get('search_basis', '')),
+                        "violation": str(row.get('violation', '')),
+                        "location": str(row.get('location', '')),
+                        "type": str(row.get('type', '')),
+                        "arrest_made": str(row.get('arrest_made', 'False')).lower() == 'true',
+                        "warning_issued": str(row.get('warning_issued', 'False')).lower() == 'true',
+                        "contraband_drugs": str(row.get('contraband_drugs', 'False')).lower() == 'true'
                     }
                 }
                 
