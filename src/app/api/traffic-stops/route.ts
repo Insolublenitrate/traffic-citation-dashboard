@@ -14,17 +14,17 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   
   // Get bounding box coordinates from query parameters
-  const min_lng = parseFloat(searchParams.get('min_lng') || '-180');
-  const min_lat = parseFloat(searchParams.get('min_lat') || '-90');
-  const max_lng = parseFloat(searchParams.get('max_lng') || '180');
-  const max_lat = parseFloat(searchParams.get('max_lat') || '90');
+  const minLng = searchParams.get('min_lng') || '-180';
+  const minLat = searchParams.get('min_lat') || '-90';
+  const maxLng = searchParams.get('max_lng') || '180';
+  const maxLat = searchParams.get('max_lat') || '90';
 
-  // Call our Supabase RPC function that uses PostGIS ST_MakeEnvelope
+  // Call our Supabase RPC function  // Construct PostGIS bounding box query using supabase.rpc
   const { data, error } = await supabase.rpc('get_traffic_stops_in_bounds', {
-    min_lng,
-    min_lat,
-    max_lng,
-    max_lat
+    min_lng: parseFloat(minLng),
+    min_lat: parseFloat(minLat),
+    max_lng: parseFloat(maxLng),
+    max_lat: parseFloat(maxLat)
   });
 
   if (error) {
