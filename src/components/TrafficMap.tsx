@@ -70,8 +70,20 @@ export default function TrafficMap({ onDataLoad }: TrafficMapProps) {
     })
   ];
 
+  if (!MAPBOX_TOKEN) {
+    return (
+      <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-zinc-900 text-white p-8 text-center z-50">
+        <div className="max-w-md space-y-4">
+          <h2 className="text-xl font-bold text-red-500">Missing Mapbox Token</h2>
+          <p>The map cannot render because NEXT_PUBLIC_MAPBOX_TOKEN is not set in your Vercel Environment Variables.</p>
+          <p className="text-sm text-zinc-400">Please add your Mapbox token to Vercel and redeploy.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="absolute inset-0 w-full h-full">
+    <div className="absolute inset-0 w-full h-full bg-zinc-950">
       <DeckGL
         initialViewState={viewState}
         controller={true}
