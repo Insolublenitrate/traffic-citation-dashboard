@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from 'react';
-import Map, { Source, Layer, NavigationControl, FullscreenControl, MapRef } from 'react-map-gl/mapbox';
-import type { CircleLayer, HeatmapLayer } from 'react-map-gl';
+import Map, { Source, Layer, NavigationControl, FullscreenControl, MapRef, LayerProps } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -18,7 +17,7 @@ const INITIAL_VIEW_STATE = {
 };
 
 // Heatmap layer for low zoom levels
-const heatmapLayer: HeatmapLayer = {
+const heatmapLayer: LayerProps = {
   id: 'traffic-heatmap',
   type: 'heatmap',
   source: 'traffic-stops',
@@ -70,7 +69,7 @@ const heatmapLayer: HeatmapLayer = {
 };
 
 // Circle layer for high zoom levels
-const pointLayer: CircleLayer = {
+const pointLayer: LayerProps = {
   id: 'traffic-points',
   type: 'circle',
   source: 'traffic-stops',
