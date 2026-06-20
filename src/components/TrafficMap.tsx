@@ -1,74 +1,112 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import Map from 'react-map-gl/mapbox';
-import DeckGL from '@deck.gl/react';
-import { ScatterplotLayer } from '@deck.gl/layers';
-import { WebMercatorViewport } from '@deck.gl/core';
+import { useState } from 'react';
+import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-map-gl/mapbox';
+import type { CircleLayer, HeatmapLayer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+const MAPBOX_USERNAME = 'insolublenitrate';
+const TILESET_ID = `${MAPBOX_USERNAME}.ohio-traffic-stops`;
 
 const INITIAL_VIEW_STATE = {
-  longitude: -77.1528, // Centered on Montgomery County, MD
-  latitude: 39.1547,
-  zoom: 10,
+  longitude: -82.9988, // Centered on Columbus, OH
+  latitude: 39.9612,
+  zoom: 6,
   pitch: 0,
   bearing: 0
 };
 
-interface TrafficMapProps {
-  onDataLoad: (data: any[]) => void;
-}
+// Heatmap layer for low zoom levels
+const heatmapLayer: HeatmapLayer = {
+  id: 'traffic-heatmap',
+  type: 'heatmap',
+  source: 'traffic-stops',
+  'source-layer': 'traffic_stops',
+  maxzoom: 12,
+  paint: {
+    // Increase the heatmap weight based on frequency
+    'heatmap-weight': 1,
+    // Increase the heatmap color weight weight by zoom level
+    // heatmap-intensity is a multiplier on top of heatmap-weight
+    'heatmap-intensity': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      0, 1,
+      12, 3
+    ],
+    // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+    // Begin color ramp at 0-stop with a 0-transparancy color
+    // to create a blur-like effect.
+    'heatmap-color': [
+      'interpolate',
+      ['linear'],
+      ['heatmap-density'],
+      0, 'rgba(33,102,172,0)',
+      0.2, 'rgb(103,169,207)',
+      0.4, 'rgb(209,229,240)',
+      0.6, 'rgb(253,219,199)',
+      0.8, 'rgb(239,138,98)',
+      1, 'rgb(178,24,43)'
+    ],
+    // Adjust the heatmap radius by zoom level
+    'heatmap-radius': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      0, 2,
+      12, 20
+    ],
+    // Transition from heatmap to circle layer by zoom level
+    'heatmap-opacity': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      9, 1,
+      13, 0
+    ]
+  }
+};
 
-export default function TrafficMap({ onDataLoad }: TrafficMapProps) {
-  const [data, setData] = useState([]);
-  const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
+// Circle layer for high zoom levels
+const pointLayer: CircleLayer = {
+  id: 'traffic-points',
+  type: 'circle',
+  source: 'traffic-stops',
+  'source-layer': 'traffic_stops',
+  minzoom: 10,
+  paint: {
+    // Red for citations, yellow for warnings
+    'circle-color': [
+      'match',
+      ['get', 'outcome'],
+      'Citation', '#ef4444', // Red
+      'Warning', '#eab308',  // Yellow
+      'Arrest', '#b91c1c',   // Dark Red
+      '#64748b' // Default slate
+    ],
+    'circle-radius': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      10, 2,
+      16, 6
+    ],
+    'circle-opacity': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      10, 0,
+      12, 1
+    ],
+    'circle-stroke-width': 1,
+    'circle-stroke-color': '#1e293b'
+  }
+};
 
-  const fetchBounds = useCallback(async (vs: typeof INITIAL_VIEW_STATE) => {
-    try {
-      // Calculate the bounding box of the current view
-      const viewport = new WebMercatorViewport({
-        width: window.innerWidth || 800,
-        height: window.innerHeight || 600,
-        ...vs
-      });
-      const [minLng, minLat, maxLng, maxLat] = viewport.getBounds();
-      
-      // Call our Next.js API route
-      const res = await fetch(`/api/traffic-stops?min_lng=${minLng}&min_lat=${minLat}&max_lng=${maxLng}&max_lat=${maxLat}`);
-      if (!res.ok) throw new Error('Failed to fetch data');
-      
-      const json = await res.json();
-      setData(json);
-      onDataLoad(json); // Pass data up to the parent dashboard component
-    } catch (err) {
-      console.error("Error fetching map data:", err);
-    }
-  }, [onDataLoad]);
-
-  // Fetch initial data on mount
-  useEffect(() => {
-    fetchBounds(viewState);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const layers = [
-    new ScatterplotLayer({
-      id: 'traffic-stops-layer',
-      data,
-      getPosition: (d: any) => [d.lng, d.lat],
-      getFillColor: (d: any) => {
-        // Red for citations, Yellow for warnings
-        return d.outcome?.toLowerCase().includes('citation') ? [239, 68, 68, 200] : [234, 179, 8, 200];
-      },
-      getRadius: 100,
-      radiusMinPixels: 4,
-      radiusMaxPixels: 15,
-      pickable: true,
-      autoHighlight: true,
-    })
-  ];
+export default function TrafficMap() {
+  const [hoverInfo, setHoverInfo] = useState<any>(null);
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -76,30 +114,66 @@ export default function TrafficMap({ onDataLoad }: TrafficMapProps) {
         <div className="max-w-md space-y-4">
           <h2 className="text-xl font-bold text-red-500">Missing Mapbox Token</h2>
           <p>The map cannot render because NEXT_PUBLIC_MAPBOX_TOKEN is not set in your Vercel Environment Variables.</p>
-          <p className="text-sm text-zinc-400">Please add your Mapbox token to Vercel and redeploy.</p>
         </div>
       </div>
     );
   }
 
+  const onHover = (event: any) => {
+    const { features, point } = event;
+    const hoveredFeature = features && features[0];
+    
+    if (hoveredFeature) {
+      setHoverInfo({
+        feature: hoveredFeature,
+        x: point.x,
+        y: point.y
+      });
+    } else {
+      setHoverInfo(null);
+    }
+  };
+
   return (
     <div className="absolute inset-0 w-full h-full bg-zinc-950">
-      <DeckGL
-        initialViewState={viewState}
-        controller={true}
-        layers={layers}
-        onViewStateChange={({ viewState: newViewState }) => {
-          setViewState(newViewState as any);
-          // Fetch new data when the map is panned or zoomed
-          fetchBounds(newViewState as any);
-        }}
-        getTooltip={({ object }) => object && `${object.agency_name}\n${object.reason_for_stop}\nOutcome: ${object.outcome}`}
+      <Map
+        initialViewState={INITIAL_VIEW_STATE}
+        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapboxAccessToken={MAPBOX_TOKEN}
+        interactiveLayerIds={['traffic-points']}
+        onMouseMove={onHover}
+        onMouseLeave={() => setHoverInfo(null)}
       >
-        <Map
-          mapStyle="mapbox://styles/mapbox/dark-v11"
-          mapboxAccessToken={MAPBOX_TOKEN}
-        />
-      </DeckGL>
+        <Source id="traffic-stops" type="vector" url={`mapbox://${TILESET_ID}`}>
+          <Layer {...heatmapLayer} />
+          <Layer {...pointLayer} />
+        </Source>
+        
+        <NavigationControl position="top-right" />
+        <FullscreenControl position="top-right" />
+
+        {hoverInfo && (
+          <div
+            className="absolute bg-zinc-900/90 text-white p-3 rounded-lg shadow-xl border border-zinc-700 pointer-events-none text-sm z-50 backdrop-blur-sm"
+            style={{ left: hoverInfo.x + 15, top: hoverInfo.y + 15 }}
+          >
+            <div className="font-bold text-lg mb-1">{hoverInfo.feature.properties.agency_name}</div>
+            <div className="text-zinc-300 mb-2">{hoverInfo.feature.properties.stop_date}</div>
+            
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+              <span className="text-zinc-500">Reason</span>
+              <span className="font-medium text-right">{hoverInfo.feature.properties.reason}</span>
+              
+              <span className="text-zinc-500">Outcome</span>
+              <span className={`font-medium text-right ${
+                hoverInfo.feature.properties.outcome === 'Citation' ? 'text-red-400' : 'text-yellow-400'
+              }`}>
+                {hoverInfo.feature.properties.outcome}
+              </span>
+            </div>
+          </div>
+        )}
+      </Map>
     </div>
   );
 }
