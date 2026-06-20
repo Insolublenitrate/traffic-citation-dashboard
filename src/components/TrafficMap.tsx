@@ -177,8 +177,8 @@ export default function TrafficMap({ onDataLoad, filters }: TrafficMapProps) {
         onIdle={updateSidebarData}
       >
         <Source id="traffic-stops" type="vector" url={`mapbox://${TILESET_ID}`}>
-          <Layer {...heatmapLayer} filter={mapboxFilter} />
-          <Layer {...pointLayer} filter={mapboxFilter} />
+          <Layer {...(heatmapLayer as any)} filter={mapboxFilter} />
+          <Layer {...(pointLayer as any)} filter={mapboxFilter} />
         </Source>
         
         <NavigationControl position="top-right" />
