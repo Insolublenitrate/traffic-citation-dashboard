@@ -125,7 +125,7 @@ export default function TrafficMap({ onDataLoad, filters }: TrafficMapProps) {
       activeFilters.push(['==', ['get', 'reason'], filters.reason]);
     }
 
-    return activeFilters.length > 1 ? activeFilters : undefined;
+    return activeFilters.length > 1 ? activeFilters : ['has', 'agency_name'];
   }, [filters]);
 
   const updateSidebarData = useCallback(() => {
