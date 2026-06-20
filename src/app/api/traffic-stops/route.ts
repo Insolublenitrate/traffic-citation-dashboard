@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
+// We initialize inside the GET request to avoid build-time errors when env vars aren't present
 export async function GET(request: Request) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json({ error: "Missing Supabase credentials in environment variables" }, { status: 500 });
+  }
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
   const { searchParams } = new URL(request.url);
   
   // Get bounding box coordinates from query parameters
