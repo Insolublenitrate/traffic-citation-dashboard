@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from 'react';
-import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-map-gl/mapbox';
+import { useState, useRef, useCallback } from 'react';
+import Map, { Source, Layer, NavigationControl, FullscreenControl, MapRef } from 'react-map-gl/mapbox';
 import type { CircleLayer, HeatmapLayer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -105,8 +105,28 @@ const pointLayer: CircleLayer = {
   }
 };
 
-export default function TrafficMap() {
+interface TrafficMapProps {
+  onDataLoad?: (data: any[]) => void;
+}
+
+export default function TrafficMap({ onDataLoad }: TrafficMapProps) {
   const [hoverInfo, setHoverInfo] = useState<any>(null);
+  const mapRef = useRef<MapRef>(null);
+
+  const updateSidebarData = useCallback(() => {
+    if (mapRef.current && onDataLoad) {
+      // Query rendered features from the Mapbox vector source
+      const features = mapRef.current.queryRenderedFeatures({
+        layers: ['traffic-points', 'traffic-heatmap']
+      });
+      // Pass the properties of the features to the sidebar
+      const propertiesList = features.map(f => f.properties);
+      
+      // Deduplicate features if needed, but Mapbox features might represent multiple points in heatmap.
+      // We will just pass the properties.
+      onDataLoad(propertiesList);
+    }
+  }, [onDataLoad]);
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -137,12 +157,14 @@ export default function TrafficMap() {
   return (
     <div className="absolute inset-0 w-full h-full bg-zinc-950">
       <Map
+        ref={mapRef}
         initialViewState={INITIAL_VIEW_STATE}
         mapStyle="mapbox://styles/mapbox/dark-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
         interactiveLayerIds={['traffic-points']}
         onMouseMove={onHover}
         onMouseLeave={() => setHoverInfo(null)}
+        onIdle={updateSidebarData}
       >
         <Source id="traffic-stops" type="vector" url={`mapbox://${TILESET_ID}`}>
           <Layer {...heatmapLayer} />
